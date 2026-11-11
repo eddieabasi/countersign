@@ -1,0 +1,16 @@
+{
+  "name": "@countersign/widget",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Embeddable Countersign verify widget (vanilla TS). Built in Phase 2.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@countersign/shared": "workspace:*"
+  }
+}

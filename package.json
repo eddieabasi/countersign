@@ -1,0 +1,37 @@
+{
+  "name": "countersign",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Trust layer for conversational commerce, built on Concordium's agent identity layer.",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "spike:registry": "pnpm --filter @countersign/trust-service spike:registry",
+    "spike:proof": "pnpm --filter @countersign/trust-service spike:proof",
+    "spike:anchor": "pnpm --filter @countersign/trust-service spike:anchor"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "prettier": "3.10.0",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vitest": "5.1.0"
+  }
+}

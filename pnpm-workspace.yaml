@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Concordium packages are pinned exactly in each package.json (see docs/DECISIONS.md).
+# Native/WASM deps that need install scripts are allow-listed here.
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - unrs-resolver
+ignoredBuiltDependencies:
+  - protobufjs

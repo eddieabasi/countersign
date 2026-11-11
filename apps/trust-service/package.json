@@ -1,0 +1,20 @@
+{
+  "name": "@countersign/trust-service",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/index.ts",
+    "start": "tsx --env-file-if-exists=../../.env src/index.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "spike:registry": "tsx --env-file-if-exists=../../.env scripts/spike/registry.ts",
+    "spike:proof": "tsx --env-file-if-exists=../../.env scripts/spike/proof.ts",
+    "spike:anchor": "tsx --env-file-if-exists=../../.env scripts/spike/anchor.ts"
+  },
+  "dependencies": {
+    "@concordium/web-sdk": "12.0.2",
+    "@countersign/shared": "workspace:*",
+    "fastify": "5.12.8",
+    "zod": "4.6.7"
+  }
+}

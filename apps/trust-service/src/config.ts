@@ -1,0 +1,38 @@
+import { z } from 'zod';
+
+const boolish = z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1');
+
+const ConfigSchema = z.object({
+  // Countersign is testnet-only until after the hackathon. Anything else is refused.
+  CONCORDIUM_NETWORK: z
+    .literal('testnet', { error: 'CONCORDIUM_NETWORK must be "testnet" (mainnet is not allowed)' })
+    .default('testnet'),
+  CONCORDIUM_GRPC_HOST: z.string().min(1).default('grpc.testnet.concordium.com'),
+  CONCORDIUM_GRPC_PORT: z.coerce.number().int().positive().default(20000),
+  CONCORDIUM_GRPC_TLS: boolish.default(true),
+
+  CIS8004_CONTRACT_INDEX: z.coerce.number().int().nonnegative().default(12802),
+  CIS8004_CONTRACT_SUBINDEX: z.coerce.number().int().nonnegative().default(0),
+  CIS8_CONTRACT_INDEX: z.coerce.number().int().nonnegative().default(12801),
+  CIS8_CONTRACT_SUBINDEX: z.coerce.number().int().nonnegative().default(0),
+
+  AGENT_REGISTRY_API_URL: z.url().default('https://agent-registry-mcp.concordium.com'),
+  ANCHOR_WALLET_EXPORT_PATH: z.string().min(1).optional(),
+
+  TRUST_SERVICE_PORT: z.coerce.number().int().positive().default(4000),
+  DATABASE_URL: z.string().optional(),
+  REDIS_URL: z.string().optional(),
+  VERDICT_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(30),
+});
+
+export type Config = z.infer<typeof ConfigSchema>;
+
+/** Parse config from env. Empty strings are treated as unset so `.env.example` copies work. */
+export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+  const cleaned = Object.fromEntries(Object.entries(env).filter(([, v]) => v !== ''));
+  const parsed = ConfigSchema.safeParse(cleaned);
+  if (!parsed.success) {
+    throw new Error(`Invalid configuration:\n${z.prettifyError(parsed.error)}`);
+  }
+  return parsed.data;
+}

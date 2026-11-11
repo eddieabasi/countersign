@@ -1,0 +1,14 @@
+{
+  "name": "@countersign/seller-agent",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference sales agent on web chat (Claude Agent SDK). Built in Phase 3.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@countersign/shared": "workspace:*"
+  }
+}
