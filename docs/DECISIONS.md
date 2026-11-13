@@ -6,7 +6,7 @@ Running record of what was verified, what changed from `CLAUDE.md`, and why. New
 
 ## Phase 1 — Merchant onboarding (target: checkpoint 2026-11-22)
 
-Status: **plan only — awaiting sign-off.** See the bottom of this file for the checklist.
+Status: **in progress** on branch `phase-1-onboarding` (started 2026-11-13). Checklist and decisions P1–P4 at the bottom of this file.
 
 ---
 
@@ -206,38 +206,52 @@ pnpm spike:anchor               # --dry-run to skip submission
 
 ---
 
-## Phase 1 plan — checklist (not started)
+## Phase 1 plan — checklist (in progress, branch `phase-1-onboarding`)
 
 Goal for 2026-11-22: a merchant connects a wallet, proves identity with a ZK proof, links a registered agent and gets a verify link, a widget snippet and an API key, end to end on testnet.
+
+**Decisions taken at kickoff (2026-11-13)** — user: "we do not want to use any mock thing now"; defaults applied:
+
+- **P1 — No mocks.** No mock modes, fake wallets or stand-in services in the product or its test flow. Real wallet, real testnet, real Postgres. Unit tests cover pure logic only; anything touching the chain or a wallet is exercised for real on the user's Mac (`CONCORDIUM_INTEGRATION=1`). DB tests use PGlite (real Postgres compiled to WASM). The dev-only `hosted` registry fallback is dropped: the trust service reads the chain only. _Exception still required by `CLAUDE.md` for Phase 3: escrow on Protocol-Level Locks is not live on testnet, so it must sit behind a clearly named mock adapter — to be confirmed with the user then._
+- **P2 — Account credentials only** for merchant proofs (`claimsBuilder().addAccountClaims`). The verified identity is bound to the connected account, which must also own the agent NFT.
+- **P3 — Link existing badges first**; in-console agent registration (card + `register` signed in the wallet) is the stretch goal.
+- **P4 — Testnet code runs on the user's Mac** until the trust service is deployed.
+
+**Confirmed wallet APIs (read from the packages, 2026-11-13)**
+
+- `@concordium/browser-wallet-api-helpers` **3.3.0** (depends on `@concordium/web-sdk ^12.0.2`): `detectConcordiumProvider(timeout?)` → `WalletApi` with `requestAccounts(): string[]`, `getSelectedChain(): genesisHash | undefined`, **`requestVerifiablePresentationV1(request: VerificationRequestV1.Type): VerifiablePresentationV1.Type`**, `sendTransaction(account, AccountTransactionType.Update, payload, params, schema)`, `signMessage`. → The Browser Wallet answers V1 proof requests directly; no WalletConnect needed for desktop.
+- `@concordium/wallet-connectors` **0.9.0** exposes only the legacy V0 `requestVerifiablePresentation(challenge, statements)` and pins helpers `3.3.0-alpha.0` → **not used**.
+- `@concordium/verification-web-ui` **0.2.1**: React/Vue/vanilla modals over WalletConnect (`@walletconnect/sign-client`), method `request_verifiable_presentation_v1`, chain `ccd:4221332d34e1694168c2a0c0b3fd0f27` (testnet). Flow: `renderUIModals()` → `session_approved {topic}` → create request with `connectionId = topic` → `sendPresentationRequest(request, topic)` → `presentation_received`. → Second path for phone wallets / Concordium ID app; uses `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`.
+- web-sdk in the browser: `@concordium/rust-bindings` browser build inlines its WASM (4.6 MB) → load web-sdk with a dynamic `import()` only on the verify step.
+- Verification checks done by `VerificationAuditRecordV1.createChecked`: context match, `verifyWithNode`, credentials Active, `verifyAnchor` of the VRA, claims vs request incl. issuer IdP. Countersign adds: the account credential's account (via `getAccountInfo(credId)`) must equal the connected account — checked **before** the VAA is anchored. Revealed attributes arrive as `AttributeValue` statements.
 
 **Prerequisites (user)**
 
 - [x] Anchoring service account `.export` (B2), funded with Request CCD — `3k3MRAXGqgS8b6FCa2MjX5adcowmf1LhEnd8xfHT4J7Jnse3k4`
-- [ ] Reown (WalletConnect) project id
-- [ ] A merchant persona wallet with a testnet identity (Browser Wallet or Concordium ID app) to produce real proofs
-- [ ] A place where gRPC works for integration runs (B1): a laptop, or an early container deploy
+- [x] Reown (WalletConnect) project id — in the user's local `.env`
+- [x] Merchant persona: Account B in the Browser Wallet, same testnet identity
+- [x] gRPC location: the user's Mac (P4)
+- [ ] Docker on the Mac for Postgres + Redis (`pnpm infra:up`)
 
-**Trust service**
+**Slice 1 — merchant verification (real, end to end)**
 
-- [ ] Drizzle schema + migrations: `merchant`, `agent`, `receipt`, `report` (as in the brief), plus `verification_session` (pending request JSON, nonce, expiry, status) and `api_key` (hashed)
-- [ ] Postgres + Redis wiring, `/healthz` checks both
-- [ ] `RegistrySource` interface: `chain` (gRPC, default) and `hosted` (dev-only fallback for B1), both fail closed
-- [ ] `POST /merchants/proof-request`: build claims → `createAndAnchor` → store session → return request JSON
-- [ ] `POST /merchants/proof-verify`: `verifyWithNode` → `VerificationAuditRecordV1.createAndAnchor` → store revealed attributes only + audit record ref → upsert merchant
-- [ ] `POST /agents`: parse badge → read registry → require Active + card hash match + **on-chain owner = merchant's verified account** → store channels → issue verify link, widget snippet, API key (shown once, stored hashed)
-- [ ] Unit tests: proof-verify outcome mapping, `/agents` ownership/status/hash rules (mocked registry)
+- [ ] Drizzle schema + SQL migrations: `merchant`, `agent`, `receipt`, `report` (brief) + `verification_session`, `api_key`; migrate on startup
+- [ ] `POST /merchants/proof-request`: account claims → `createAndAnchor` → wait for finalization → store session → return request JSON
+- [ ] `POST /merchants/proof-verify`: `createChecked` → account binding → `registerAnchor` (VAA) → store revealed attributes only + VAA ref → upsert merchant
+- [ ] `/console`: detect Browser Wallet → testnet check → `requestAccounts` → display name → `requestVerifiablePresentationV1` → result with CCDScan links
+- [ ] User runs it on the Mac; tx hashes recorded here (closes Phase 0 spike (b)-verify)
 
-**Web (Merchant Console)**
+**Slice 2 — agent linking + issuance**
 
-- [ ] Read docs/types for `@concordium/wallet-connectors` 0.9.0 and `@concordium/verification-web-ui` 0.2.1 first; log the confirmed API here
-- [ ] `/console`: connect wallet (Browser Wallet + WalletConnect)
-- [ ] `/console/verify`: proof flow with `verification-web-ui` → trust service
-- [ ] `/console/agents/new`: paste a badge + choose channels (web chat, WhatsApp, Instagram, email, domain); show registry checks live
-- [ ] `/console/done`: verify link, widget `<script>` snippet, API key
-- [ ] Playwright smoke test for onboarding against a mocked trust service
+- [ ] `POST /agents`: parse badge → chain read → Active + card hash match + on-chain owner = merchant account → store channels
+- [ ] Issue verify link, widget snippet, API key (shown once, stored hashed)
+- [ ] `/console/agents/new` + `/console/done`
+- [ ] Phone-wallet path via `verification-web-ui` (WalletConnect)
 
-**Integration**
+**Tests**
 
-- [ ] `CONCORDIUM_INTEGRATION=1` test: proof-request anchors on testnet and `verifyAnchor` passes
-- [ ] Re-run spikes (a)-gRPC, (b), (c) on-chain and paste tx hashes here
+- [ ] Unit: claims, request JSON round-trip, disclosed-attribute extraction, account-binding rule, `/agents` rules
+- [ ] DB tests on PGlite (real Postgres)
+- [ ] `CONCORDIUM_INTEGRATION=1`: proof-request anchors and `verifyAnchor` passes (run on the Mac)
+- [ ] Playwright smoke against the real local stack (pages render, trust service healthy); the wallet step is manual
 - [ ] Commit at checkpoint
