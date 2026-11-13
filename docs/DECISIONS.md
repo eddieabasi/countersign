@@ -18,11 +18,13 @@ Status: **plan only — awaiting sign-off.** See the bottom of this file for the
 - [x] Strict TS, ESLint (flat config, typescript-eslint strict), Prettier, Vitest projects
 - [x] `infra/docker-compose.yml` (Postgres 16, Redis 7) and `.env.example`
 - [x] Read current docs for web-sdk, verification-web-ui, Agent Registry, MCP service; pinned versions
-- [x] Spike (a) read an agent from the Agent Registry — **hosted path executed on testnet**; gRPC path written + typechecked, not executed (see B1)
-- [x] Spike (b) create + verify a proof request — **offline part executed**; anchoring + `verifyWithNode` written + typechecked, need B1 + B2 + a wallet presentation
-- [x] Spike (c) anchor an audit record — **offline part executed** (CBOR anchor built, 93/256 bytes); submission needs B1 + B2
+- [x] Spike (a) read an agent from the Agent Registry — hosted path (sandbox) and **gRPC `CIS-8004.agentOf` path run on testnet from the user's Mac (2026-11-13)**; decoded status matched Concordium's hosted service
+- [x] Spike (b) create a proof request — **anchored on testnet**: VRA tx `b14b05179eae32fcfb7ea49da24c15ce93fb2e1ac66dc7beefd0b72248f74ae4` (block 50760287), `verifyAnchor` ok
+- [ ] Spike (b) verify a presentation (`verifyWithNode` + VAA) — needs a real wallet presentation; carried into Phase 1 (first console task)
+- [x] Spike (c) anchor an audit record — **Trust Receipt anchored on testnet**: tx `08ea617b45ca8b19f1253386e465e65a1493713bf5d96449a94314e57859bdf1` (block 50760283), on-chain bytes decode to the same receipt hash
 - [x] Testnet anchoring account created and exported by the user (2026-11-13)
-- [ ] Run (a)-gRPC, (b), (c) on-chain from a machine that can reach the node (B1)
+- [x] Run (a)-gRPC, (b)-create, (c) on-chain from a machine that can reach the node (B1) — `pnpm spike`, all PASS, 2026-11-13
+- [x] Both anchor txs independently confirmed on CCDScan (`REGISTER_DATA`, Success; data bytes identical to what the spikes printed)
 
 ### Pinned versions
 
@@ -59,14 +61,17 @@ Status: **plan only — awaiting sign-off.** See the bottom of this file for the
 
 **Testnet fixtures** (registry `<12802,0>`) for tests and the demo:
 
-| Token                 | Badge                   | Case                                                   |
-| --------------------- | ----------------------- | ------------------------------------------------------ |
-| 1112                  | `JyP9VYjZYJcQebdQ7ypD5` | Active, card hash matches (no badge extension in card) |
-| 1000, 900, 1100, 1111 | —                       | Active, card hash matches                              |
-| 0                     | `JyP9TtQC3HCNrTYR3sc2T` | Active, card URL 404 → **card hash mismatch**          |
-| 1050                  | —                       | Active, card 404 → mismatch                            |
-| 15                    | `JyP9UApR1fgJJL79x1xQT` | **Revoked**                                            |
-| 999999                | `JyP9V5dupAgxNyUmSS4CG` | **Not found**                                          |
+| Token            | Badge                          | Case                                                             |
+| ---------------- | ------------------------------ | ---------------------------------------------------------------- |
+| 1000             | `JyP9YGLfHqYxwH3ktm562`        | Active, card hash matches (default spike badge since 2026-11-13) |
+| 900              | `JyP9WNtW9Fg9xoHfAjzm4`        | Active, card hash matches                                        |
+| 1112, 1111, 1100 | `JyP9VYjZYJcQebdQ7ypD5` (1112) | **Revoked by their owner between 11-11 and 11-13**; card now 404 |
+| 0                | `JyP9TtQC3HCNrTYR3sc2T`        | Active, card URL 404 → **card hash mismatch**                    |
+| 1050             | —                              | Active, card 404 → mismatch                                      |
+| 15               | `JyP9UApR1fgJJL79x1xQT`        | **Revoked**                                                      |
+| 999999           | `JyP9V5dupAgxNyUmSS4CG`        | **Not found**                                                    |
+
+**Fixture drift:** third-party testnet agents change under us (1112 was revoked two days after it was picked). Tests never depend on live fixtures; the demo will use Countersign's own agent registered by the merchant persona account.
 
 ### Exact working calls
 
@@ -194,7 +199,7 @@ pnpm install
 cp .env.example .env            # set ANCHOR_WALLET_EXPORT_PATH for on-chain steps
 pnpm spike                      # runs all three below in order + prints a PASS/FAIL summary
 pnpm spike:registry             # default badge JyP9VYjZYJcQebdQ7ypD5; also try 0, 15, 999999
-pnpm spike:registry 1112 --via grpc
+pnpm spike:registry 1000 --via grpc
 pnpm spike:proof create         # then: pnpm spike:proof verify --presentation <file>
 pnpm spike:anchor               # --dry-run to skip submission
 ```
@@ -207,7 +212,7 @@ Goal for 2026-11-22: a merchant connects a wallet, proves identity with a ZK pro
 
 **Prerequisites (user)**
 
-- [ ] Anchoring service account `.export` (B2), funded with Request CCD
+- [x] Anchoring service account `.export` (B2), funded with Request CCD — `3k3MRAXGqgS8b6FCa2MjX5adcowmf1LhEnd8xfHT4J7Jnse3k4`
 - [ ] Reown (WalletConnect) project id
 - [ ] A merchant persona wallet with a testnet identity (Browser Wallet or Concordium ID app) to produce real proofs
 - [ ] A place where gRPC works for integration runs (B1): a laptop, or an early container deploy

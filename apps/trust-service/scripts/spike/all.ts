@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 
 const spikes: { name: string; file: string; args: string[] }[] = [
-  { name: '(a) registry read via gRPC', file: 'registry.ts', args: ['1112', '--via', 'grpc'] },
+  { name: '(a) registry read via gRPC', file: 'registry.ts', args: ['1000', '--via', 'grpc'] },
   { name: '(c) anchor Trust Receipt', file: 'anchor.ts', args: [] },
   { name: '(b) proof request create', file: 'proof.ts', args: ['create'] },
 ];

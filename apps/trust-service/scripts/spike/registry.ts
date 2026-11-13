@@ -23,7 +23,7 @@ const { positionals, values } = parseArgs({
   options: { via: { type: 'string', default: 'both' } },
 });
 const registry = { index: cfg.CIS8004_CONTRACT_INDEX, subindex: cfg.CIS8004_CONTRACT_SUBINDEX };
-const input = positionals[0] ?? 'JyP9VYjZYJcQebdQ7ypD5'; // testnet token 1112, card verifies
+const input = positionals[0] ?? 'JyP9YGLfHqYxwH3ktm562'; // testnet token 1000: Active, card verifies (2026-11-13)
 const badge = /^\d+$/.test(input) ? badgeFor(registry, BigInt(input)) : input;
 const results: Record<string, Checks> = {};
 
