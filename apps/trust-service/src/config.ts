@@ -20,8 +20,12 @@ const ConfigSchema = z.object({
 
   AGENT_REGISTRY_API_URL: z.url().default('https://agent-registry-mcp.concordium.com'),
   ANCHOR_WALLET_EXPORT_PATH: z.string().min(1).optional(),
+  /** Hosted deploys (Railway): the wallet export file's JSON content, stored as a secret variable. */
+  ANCHOR_WALLET_EXPORT_JSON: z.string().min(1).optional(),
 
   TRUST_SERVICE_PORT: z.coerce.number().int().positive().default(4000),
+  /** Public base URL of this service (Agent Card URLs, verify links). */
+  TRUST_SERVICE_PUBLIC_URL: z.url().default('http://localhost:4000'),
   /** Public URL of the web app: CORS origin and the proof request's ResourceID. */
   WEB_PUBLIC_URL: z.url().default('http://localhost:3000'),
   DATABASE_URL: z.string().optional(),
@@ -49,6 +53,8 @@ export function findRepoRoot(start: string): string {
  */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): Config {
   const cleaned = Object.fromEntries(Object.entries(env).filter(([, v]) => v !== ''));
+  // Railway (and most hosts) inject PORT; it wins unless TRUST_SERVICE_PORT is set explicitly.
+  if (cleaned.PORT && !cleaned.TRUST_SERVICE_PORT) cleaned.TRUST_SERVICE_PORT = cleaned.PORT;
   const parsed = ConfigSchema.safeParse(cleaned);
   if (!parsed.success) {
     throw new Error(`Invalid configuration:\n${z.prettifyError(parsed.error)}`);

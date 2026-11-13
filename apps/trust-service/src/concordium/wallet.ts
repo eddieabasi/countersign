@@ -13,7 +13,12 @@ export type AnchorAccount = { sender: AccountAddress.Type; signer: AccountSigner
  * Refuses anything that is not a testnet export.
  */
 export function loadAnchorAccount(path: string): AnchorAccount {
-  const wallet = parseWallet(readFileSync(path, 'utf8'));
+  return anchorAccountFromJson(readFileSync(path, 'utf8'));
+}
+
+/** Same as loadAnchorAccount, from the export file's JSON text (e.g. a secret env variable). */
+export function anchorAccountFromJson(json: string): AnchorAccount {
+  const wallet = parseWallet(json);
   if (wallet.environment.toLowerCase() !== 'testnet') {
     throw new Error(
       `Refusing to load a "${wallet.environment}" wallet export — Countersign is testnet-only.`,

@@ -33,6 +33,11 @@ describe('config', () => {
     ).toBe('/abs/key.export');
   });
 
+  it("uses the host's PORT unless TRUST_SERVICE_PORT is set", () => {
+    expect(loadConfig({ PORT: '8080' }).TRUST_SERVICE_PORT).toBe(8080);
+    expect(loadConfig({ PORT: '8080', TRUST_SERVICE_PORT: '4000' }).TRUST_SERVICE_PORT).toBe(4000);
+  });
+
   it('treats empty strings as unset', () => {
     expect(loadConfig({ ANCHOR_WALLET_EXPORT_PATH: '' }).ANCHOR_WALLET_EXPORT_PATH).toBeUndefined();
   });
