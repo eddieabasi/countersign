@@ -1,11 +1,15 @@
+import Link from 'next/link';
 import { VERDICT_SCOPE } from '@countersign/shared';
 
 export default function Home() {
   return (
-    <main style={{ maxWidth: 640 }}>
+    <main className="container">
       <h1>Countersign</h1>
-      <p>Merchant Console and public Verify page arrive in Phase 1 and Phase 2.</p>
-      <p style={{ color: '#555', fontSize: 14 }}>{VERDICT_SCOPE}</p>
+      <p>Proof that an accountable, verified business stands behind an AI sales agent.</p>
+      <p>
+        <Link href="/console">Open the Merchant Console →</Link>
+      </p>
+      <p className="muted small">{VERDICT_SCOPE}</p>
     </main>
   );
 }

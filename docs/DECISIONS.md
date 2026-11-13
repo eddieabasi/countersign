@@ -225,6 +225,9 @@ Goal for 2026-11-22: a merchant connects a wallet, proves identity with a ZK pro
 - web-sdk in the browser: `@concordium/rust-bindings` browser build inlines its WASM (4.6 MB) → load web-sdk with a dynamic `import()` only on the verify step.
 - Verification checks done by `VerificationAuditRecordV1.createChecked`: context match, `verifyWithNode`, credentials Active, `verifyAnchor` of the VRA, claims vs request incl. issuer IdP. Countersign adds: the account credential's account (via `getAccountInfo(credId)`) must equal the connected account — checked **before** the VAA is anchored. Revealed attributes arrive as `AttributeValue` statements.
 
+- **D12 — Merchant display name is self-declared (open).** The proof establishes an accountable, verified person (adult, valid IdP identity, revealed country) behind the account; the business name they type is not proven. The LEI path (stretch) would prove a legal entity name. The verify page must word this honestly.
+- **D13 — One `.env` at the repo root for every app.** `apps/web/next.config.ts` loads it with `process.loadEnvFile` before compilation so `NEXT_PUBLIC_*` values are inlined (verified in a build).
+
 **Prerequisites (user)**
 
 - [x] Anchoring service account `.export` (B2), funded with Request CCD — `3k3MRAXGqgS8b6FCa2MjX5adcowmf1LhEnd8xfHT4J7Jnse3k4`
@@ -235,10 +238,10 @@ Goal for 2026-11-22: a merchant connects a wallet, proves identity with a ZK pro
 
 **Slice 1 — merchant verification (real, end to end)**
 
-- [ ] Drizzle schema + SQL migrations: `merchant`, `agent`, `receipt`, `report` (brief) + `verification_session`, `api_key`; migrate on startup
-- [ ] `POST /merchants/proof-request`: account claims → `createAndAnchor` → wait for finalization → store session → return request JSON
-- [ ] `POST /merchants/proof-verify`: `createChecked` → account binding → `registerAnchor` (VAA) → store revealed attributes only + VAA ref → upsert merchant
-- [ ] `/console`: detect Browser Wallet → testnet check → `requestAccounts` → display name → `requestVerifiablePresentationV1` → result with CCDScan links
+- [x] Drizzle schema + SQL migrations: `merchant`, `agent`, `receipt`, `report` (brief) + `verification_session`, `api_key`; migrate on startup
+- [x] `POST /merchants/proof-request`: account claims → `createAndAnchor` → wait for finalization → store session → return request JSON
+- [x] `POST /merchants/proof-verify`: `createChecked` → account binding → `registerAnchor` (VAA) → store revealed attributes only + VAA ref → upsert merchant
+- [x] `/console`: detect Browser Wallet → testnet check → `requestAccounts` → display name → `requestVerifiablePresentationV1` → result with CCDScan links (renders headless with no errors; web-sdk chunk 5.4 MB loads only on Verify)
 - [ ] User runs it on the Mac; tx hashes recorded here (closes Phase 0 spike (b)-verify)
 
 **Slice 2 — agent linking + issuance**
@@ -250,8 +253,9 @@ Goal for 2026-11-22: a merchant connects a wallet, proves identity with a ZK pro
 
 **Tests**
 
-- [ ] Unit: claims, request JSON round-trip, disclosed-attribute extraction, account-binding rule, `/agents` rules
-- [ ] DB tests on PGlite (real Postgres)
+- [x] Unit: claims, request JSON round-trip, disclosed-attribute extraction
+- [ ] Unit: `/agents` rules
+- [x] DB tests on PGlite (real Postgres): migrations, merchant upsert, route guards
 - [ ] `CONCORDIUM_INTEGRATION=1`: proof-request anchors and `verifyAnchor` passes (run on the Mac)
 - [ ] Playwright smoke against the real local stack (pages render, trust service healthy); the wallet step is manual
 - [ ] Commit at checkpoint
