@@ -20,7 +20,7 @@ Status: **in progress** on branch `phase-1-onboarding` (started 2026-11-13). Che
 - [x] Read current docs for web-sdk, verification-web-ui, Agent Registry, MCP service; pinned versions
 - [x] Spike (a) read an agent from the Agent Registry — hosted path (sandbox) and **gRPC `CIS-8004.agentOf` path run on testnet from the user's Mac (2026-11-13)**; decoded status matched Concordium's hosted service
 - [x] Spike (b) create a proof request — **anchored on testnet**: VRA tx `b14b05179eae32fcfb7ea49da24c15ce93fb2e1ac66dc7beefd0b72248f74ae4` (block 50760287), `verifyAnchor` ok
-- [ ] Spike (b) verify a presentation (`verifyWithNode` + VAA) — needs a real wallet presentation; carried into Phase 1 (first console task)
+- [x] Spike (b) verify a presentation (`verifyWithNode` + VAA) — **done via the Phase 1 console, 2026-11-13**: VAA tx `b16036a11c171ea012589c7f458e6ee90079478e1c51c0434b934c133ef875da` (block 50763611)
 - [x] Spike (c) anchor an audit record — **Trust Receipt anchored on testnet**: tx `08ea617b45ca8b19f1253386e465e65a1493713bf5d96449a94314e57859bdf1` (block 50760283), on-chain bytes decode to the same receipt hash
 - [x] Testnet anchoring account created and exported by the user (2026-11-13)
 - [x] Run (a)-gRPC, (b)-create, (c) on-chain from a machine that can reach the node (B1) — `pnpm spike`, all PASS, 2026-11-13
@@ -235,7 +235,7 @@ Goal for 2026-11-22: a merchant connects a wallet, proves identity with a ZK pro
 - [x] Reown (WalletConnect) project id — in the user's local `.env`
 - [x] Merchant persona: Account B in the Browser Wallet, same testnet identity
 - [x] gRPC location: the user's Mac (P4)
-- [ ] Docker on the Mac for Postgres + Redis (`pnpm infra:up`)
+- [x] Docker on the Mac for Postgres + Redis (`pnpm infra:up`)
 
 **Slice 1 — merchant verification (real, end to end)**
 
@@ -243,7 +243,7 @@ Goal for 2026-11-22: a merchant connects a wallet, proves identity with a ZK pro
 - [x] `POST /merchants/proof-request`: account claims → `createAndAnchor` → wait for finalization → store session → return request JSON
 - [x] `POST /merchants/proof-verify`: `createChecked` → account binding → `registerAnchor` (VAA) → store revealed attributes only + VAA ref → upsert merchant
 - [x] `/console`: detect Browser Wallet → testnet check → `requestAccounts` → display name → `requestVerifiablePresentationV1` → result with CCDScan links (renders headless with no errors; web-sdk chunk 5.4 MB loads only on Verify)
-- [ ] User runs it on the Mac; tx hashes recorded here (closes Phase 0 spike (b)-verify)
+- [x] **User ran it on the Mac, 2026-11-13 — merchant "Mama's Fabrics · DK" verified from Account B.** VRA `724958807a462f1cacdaf9cc2b1760af500e6c2cda7cfd017882f0885d6a5d2d` (block 50763603) → wallet proof → `createChecked` + account binding → VAA `b16036a11c171ea012589c7f458e6ee90079478e1c51c0434b934c133ef875da` (block 50763611). Both confirmed on CCDScan (`REGISTER_DATA`, Success). Three earlier VRAs (`3282a99e…`, `4ebb324e…` and the age-check attempt) were abandoned requests.
 
 **Slice 2 — agent linking + issuance**
 
