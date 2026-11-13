@@ -193,9 +193,9 @@ export function MerchantVerify() {
             />
           </label>
           <p className="muted small">
-            Your wallet will be asked to prove, from this account, that you are over 18 with a valid
-            Concordium identity, and to reveal your <strong>country of residence</strong>. Nothing
-            else is shared. No documents are stored.
+            Your wallet will be asked to prove that this account carries a valid Concordium identity
+            and to reveal your <strong>country of residence</strong>. Nothing else is shared. No
+            documents are stored.
           </p>
           <button type="submit">Verify with Concordium</button>
         </form>

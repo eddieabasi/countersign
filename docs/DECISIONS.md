@@ -216,6 +216,7 @@ Goal for 2026-11-22: a merchant connects a wallet, proves identity with a ZK pro
 - **P2 — Account credentials only** for merchant proofs (`claimsBuilder().addAccountClaims`). The verified identity is bound to the connected account, which must also own the agent NFT.
 - **P3 — Link existing badges first**; in-console agent registration (card + `register` signed in the wallet) is the stretch goal.
 - **P4 — Testnet code runs on the user's Mac** until the trust service is deployed.
+- **P5 — No age check in merchant proofs (2026-11-13).** First real run: the Browser Wallet showed "Age: 18 years or older" in red and offered only Reject — the merchant persona's test identity could not satisfy `addMinimumAge(18)`. The user chose to drop it: for a business the accountability anchor is the verified identity behind the account (every Concordium account requires one), and age adds little. Claims are now account credential + `revealAttribute('countryOfResidence')` only. Wallet behaviour noted: unsatisfiable statements render red and the Approve button is hidden.
 
 **Confirmed wallet APIs (read from the packages, 2026-11-13)**
 
@@ -225,7 +226,7 @@ Goal for 2026-11-22: a merchant connects a wallet, proves identity with a ZK pro
 - web-sdk in the browser: `@concordium/rust-bindings` browser build inlines its WASM (4.6 MB) → load web-sdk with a dynamic `import()` only on the verify step.
 - Verification checks done by `VerificationAuditRecordV1.createChecked`: context match, `verifyWithNode`, credentials Active, `verifyAnchor` of the VRA, claims vs request incl. issuer IdP. Countersign adds: the account credential's account (via `getAccountInfo(credId)`) must equal the connected account — checked **before** the VAA is anchored. Revealed attributes arrive as `AttributeValue` statements.
 
-- **D12 — Merchant display name is self-declared (open).** The proof establishes an accountable, verified person (adult, valid IdP identity, revealed country) behind the account; the business name they type is not proven. The LEI path (stretch) would prove a legal entity name. The verify page must word this honestly.
+- **D12 — Merchant display name is self-declared (open).** The proof establishes an accountable, verified person (valid IdP identity, revealed country) behind the account; the business name they type is not proven. The LEI path (stretch) would prove a legal entity name. The verify page must word this honestly.
 - **D13 — One `.env` at the repo root for every app.** `apps/web/next.config.ts` loads it with `process.loadEnvFile` before compilation so `NEXT_PUBLIC_*` values are inlined (verified in a build).
 
 **Prerequisites (user)**

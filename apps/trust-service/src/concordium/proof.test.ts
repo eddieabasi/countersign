@@ -11,7 +11,7 @@ describe('merchant proof request (offline)', () => {
     nonce: new Uint8Array(32).fill(7),
   });
 
-  it('asks an account credential for age ≥ 18 + revealed country, from testnet IdPs 0/3/5', () => {
+  it('asks an account credential to reveal country only (no age check), from testnet IdPs 0/3/5', () => {
     expect(claims).toHaveLength(1);
     const [c] = claims;
     if (!c) throw new Error('no claims');
@@ -23,8 +23,7 @@ describe('merchant proof request (offline)', () => {
       'did:ccd:testnet:idp:5',
     ]);
     const kinds = c.statements.map((s) => `${s.type}:${String(s.attributeTag)}`);
-    expect(kinds).toContain('AttributeInRange:dob');
-    expect(kinds).toContain('RevealAttribute:countryOfResidence');
+    expect(kinds).toEqual(['RevealAttribute:countryOfResidence']);
   });
 
   it('requests the block hash from the presenter and binds nonce/connection/resource', () => {
