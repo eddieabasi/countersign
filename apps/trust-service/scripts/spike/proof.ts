@@ -23,7 +23,7 @@ import {
   VerificationAuditRecordV1,
   VerificationRequestV1,
 } from '@concordium/web-sdk';
-import { merchantIndividualClaims, merchantProofContext } from '../../src/concordium/proof.ts';
+import { merchantAccountClaims, merchantProofContext } from '../../src/concordium/proof.ts';
 import {
   OUT_DIR,
   anchorAccountOrExplain,
@@ -42,7 +42,7 @@ const cmd = positionals[0] ?? 'create';
 
 if (cmd === 'create') {
   heading('Proof request (offline)');
-  const claims = merchantIndividualClaims();
+  const claims = merchantAccountClaims();
   const context = merchantProofContext({
     connectionId: `spike-${randomUUID()}`,
     resourceId: 'countersign:merchant-console',

@@ -22,6 +22,8 @@ const ConfigSchema = z.object({
   ANCHOR_WALLET_EXPORT_PATH: z.string().min(1).optional(),
 
   TRUST_SERVICE_PORT: z.coerce.number().int().positive().default(4000),
+  /** Public URL of the web app: CORS origin and the proof request's ResourceID. */
+  WEB_PUBLIC_URL: z.url().default('http://localhost:3000'),
   DATABASE_URL: z.string().optional(),
   REDIS_URL: z.string().optional(),
   VERDICT_CACHE_TTL_SECONDS: z.coerce.number().int().positive().default(30),

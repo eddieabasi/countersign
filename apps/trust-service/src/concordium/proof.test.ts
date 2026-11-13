@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { VerificationRequestV1 } from '@concordium/web-sdk';
-import { merchantIndividualClaims, merchantProofContext } from './proof.ts';
+import { merchantAccountClaims, merchantProofContext } from './proof.ts';
 
 describe('merchant proof request (offline)', () => {
-  const claims = merchantIndividualClaims();
+  const claims = merchantAccountClaims();
   const context = merchantProofContext({
     connectionId: 'wc-topic-123',
     resourceId: 'https://countersign.example/console',
@@ -11,12 +11,12 @@ describe('merchant proof request (offline)', () => {
     nonce: new Uint8Array(32).fill(7),
   });
 
-  it('asks only for age ≥ 18 + revealed country, from testnet IdPs 0/3/5', () => {
+  it('asks an account credential for age ≥ 18 + revealed country, from testnet IdPs 0/3/5', () => {
     expect(claims).toHaveLength(1);
     const [c] = claims;
     if (!c) throw new Error('no claims');
     expect(c.type).toBe('identity');
-    expect(c.source.sort()).toEqual(['accountCredential', 'identityCredential']);
+    expect(c.source).toEqual(['accountCredential']);
     expect(c.issuers.map((i) => i.toJSON())).toEqual([
       'did:ccd:testnet:idp:0',
       'did:ccd:testnet:idp:3',

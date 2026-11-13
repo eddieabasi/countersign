@@ -13,13 +13,14 @@ export function testnetIssuers(): IdentityProviderDID[] {
 }
 
 /**
- * Merchant onboarding claims (individual path): the merchant proves they hold a valid Concordium
- * identity from a trusted IdP, is an adult, and chooses to reveal their country of residence.
- * Nothing else is disclosed. The wallet picks an identity or account credential.
+ * Merchant onboarding claims (individual path, decision P2): the merchant proves, from an
+ * **account credential**, that the account they connected belongs to an adult with a valid identity
+ * from a trusted testnet IdP, and chooses to reveal their country of residence. Nothing else is
+ * disclosed. Account-only binds the verified identity to the account that must own the agent NFT.
  */
-export function merchantIndividualClaims(): VerificationRequestV1.SubjectClaims[] {
+export function merchantAccountClaims(): VerificationRequestV1.SubjectClaims[] {
   return VerificationRequestV1.claimsBuilder()
-    .addAccountOrIdentityClaims(testnetIssuers(), (b) => {
+    .addAccountClaims(testnetIssuers(), (b) => {
       b.addMinimumAge(18);
       b.revealAttribute('countryOfResidence');
     })
