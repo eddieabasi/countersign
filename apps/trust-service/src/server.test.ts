@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { VERDICT_SCOPE } from '@countersign/shared';
-import { loadConfig } from './config.ts';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { findRepoRoot, loadConfig } from './config.ts';
 import { buildServer } from './server.ts';
 
 describe('config', () => {
@@ -13,6 +15,21 @@ describe('config', () => {
 
   it('refuses mainnet', () => {
     expect(() => loadConfig({ CONCORDIUM_NETWORK: 'mainnet' })).toThrow(/testnet/);
+  });
+
+  it('resolves a relative key path from the repo root, not the package cwd (regression)', () => {
+    const pkgDir = fileURLToPath(new URL('..', import.meta.url)); // apps/trust-service/
+    const repoRoot = findRepoRoot(pkgDir);
+    expect(repoRoot).toBe(resolve(pkgDir, '../..'));
+    const cfg = loadConfig(
+      { ANCHOR_WALLET_EXPORT_PATH: './secrets/anchor-account.export' },
+      pkgDir,
+    );
+    expect(cfg.ANCHOR_WALLET_EXPORT_PATH).toBe(join(repoRoot, 'secrets', 'anchor-account.export'));
+    expect(
+      loadConfig({ ANCHOR_WALLET_EXPORT_PATH: '/abs/key.export' }, pkgDir)
+        .ANCHOR_WALLET_EXPORT_PATH,
+    ).toBe('/abs/key.export');
   });
 
   it('treats empty strings as unset', () => {

@@ -47,12 +47,28 @@ function unwrapOption<T>(v: unknown, field: string): T | undefined {
   throw new RegistryReadError(`unexpected Option encoding for ${field}`);
 }
 
+function isByte(b: unknown): boolean {
+  // The SDK's schema decoder parses numbers with json-bigint, so u8 elements arrive as BigInt.
+  if (typeof b === 'bigint') return b >= 0n && b <= 255n;
+  return typeof b === 'number' && Number.isInteger(b) && b >= 0 && b <= 255;
+}
+
+function describe(v: unknown): string {
+  const json = JSON.stringify(v, (_k, x: unknown) => (typeof x === 'bigint' ? `${x}n` : x));
+  return `${Array.isArray(v) ? 'array' : typeof v}: ${(json ?? String(v)).slice(0, 80)}`;
+}
+
+/**
+ * Bytes as decoded by web-sdk 12.0.2: `[u8; N]` → array of BigInt (verified against the SDK),
+ * `ByteArray`/`ByteList` → hex string. Plain numbers accepted for robustness.
+ */
 function bytesToHex(v: unknown, field: string): string {
-  if (Array.isArray(v) && v.every((b) => Number.isInteger(b) && b >= 0 && b <= 255)) {
-    return Buffer.from(v as number[]).toString('hex');
+  if (Array.isArray(v) && v.every(isByte)) {
+    return Buffer.from(v.map((b) => Number(b as number | bigint))).toString('hex');
   }
-  if (typeof v === 'string' && /^[0-9a-f]*$/i.test(v)) return v.toLowerCase();
-  throw new RegistryReadError(`unexpected byte encoding for ${field}`);
+  if (typeof v === 'string' && /^(0x)?[0-9a-f]*$/i.test(v))
+    return v.replace(/^0x/i, '').toLowerCase();
+  throw new RegistryReadError(`unexpected byte encoding for ${field} (${describe(v)})`);
 }
 
 function asString(v: unknown, field: string): string {

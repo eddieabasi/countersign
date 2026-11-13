@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ConcordiumGRPCNodeClient } from '@concordium/web-sdk/nodejs';
@@ -60,7 +60,13 @@ export function anchorAccountOrExplain(): AnchorAccount | null {
     console.log('    export its keys (.export) and point ANCHOR_WALLET_EXPORT_PATH at the file.');
     return null;
   }
+  if (!existsSync(cfg.ANCHOR_WALLET_EXPORT_PATH)) {
+    console.log(`  ✗ anchor key file not found at ${cfg.ANCHOR_WALLET_EXPORT_PATH}`);
+    console.log('    (relative paths in .env are resolved from the repo root)');
+    return null;
+  }
   const acct = loadAnchorAccount(cfg.ANCHOR_WALLET_EXPORT_PATH);
+  kv('anchor key file', cfg.ANCHOR_WALLET_EXPORT_PATH);
   kv('anchor account', acct.sender.address);
   return acct;
 }

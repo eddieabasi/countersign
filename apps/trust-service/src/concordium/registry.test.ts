@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { deserializeTypeValue } from '@concordium/web-sdk';
 import { RegistryReadError, encodeTokenIdU64Param, normalizeAgentOf } from './registry.ts';
 
 const none = { None: [] };
@@ -63,6 +64,48 @@ describe('normalizeAgentOf', () => {
     expect(() => normalizeAgentOf({ weird: true })).toThrow(RegistryReadError);
     expect(() => normalizeAgentOf(some({ ...activeView, status: { Paused: [] } }))).toThrow(
       RegistryReadError,
+    );
+  });
+});
+
+describe('normalizeAgentOf with real web-sdk decoder output', () => {
+  // Build Option<[u8; 32]> with schema Type tags from concordium-contracts-common
+  // (21 = Enum, 19 = Array, 2 = U8; field kinds 2 = none, 1 = unnamed) and decode it with the SDK,
+  // so this test fails if the SDK's JSON shape for the registry's metadata_hash ever changes.
+  const u32 = (n: number) => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >> 24) & 255];
+  const str = (s: string) => [...u32(s.length), ...Buffer.from(s)];
+  const optArray32 = [
+    21,
+    ...u32(2),
+    ...str('None'),
+    2,
+    ...str('Some'),
+    1,
+    ...u32(1),
+    19,
+    ...u32(32),
+    2,
+  ];
+  const ab = (u: number[]) => Uint8Array.from(u).buffer;
+
+  it('accepts the BigInt byte array the SDK produces for metadata_hash (regression)', () => {
+    const decodedHash: unknown = deserializeTypeValue(ab([1, ...hash]), ab(optArray32));
+    const r = normalizeAgentOf(some({ ...activeView, metadata_hash: decodedHash }));
+    expect(r?.metadataHashHex).toBe(
+      'b884437caa91954653ce6d76a8fd7bad1153dc0a252178829fceb4d6caf1943b',
+    );
+  });
+
+  it('accepts hex-string encodings (ByteArray schema)', () => {
+    const hex = 'B884437CAA91954653CE6D76A8FD7BAD1153DC0A252178829FCEB4D6CAF1943B';
+    expect(
+      normalizeAgentOf(some({ ...activeView, metadata_hash: some(hex) }))?.metadataHashHex,
+    ).toBe(hex.toLowerCase());
+  });
+
+  it('reports the offending value when bytes are malformed', () => {
+    expect(() => normalizeAgentOf(some({ ...activeView, metadata_hash: some([999n]) }))).toThrow(
+      /metadata_hash \(array: \["999n"\]\)/,
     );
   });
 });

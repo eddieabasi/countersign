@@ -21,7 +21,7 @@ Status: **plan only — awaiting sign-off.** See the bottom of this file for the
 - [x] Spike (a) read an agent from the Agent Registry — **hosted path executed on testnet**; gRPC path written + typechecked, not executed (see B1)
 - [x] Spike (b) create + verify a proof request — **offline part executed**; anchoring + `verifyWithNode` written + typechecked, need B1 + B2 + a wallet presentation
 - [x] Spike (c) anchor an audit record — **offline part executed** (CBOR anchor built, 93/256 bytes); submission needs B1 + B2
-- [ ] Testnet anchoring account — **needs the user's wallet** (B2)
+- [x] Testnet anchoring account created and exported by the user (2026-11-13)
 - [ ] Run (a)-gRPC, (b), (c) on-chain from a machine that can reach the node (B1)
 
 ### Pinned versions
@@ -178,9 +178,12 @@ Signer: `buildAccountSigner(parseWallet(<Browser Wallet .export>))`; the loader 
 - **D8 — Internal packages ship TypeScript source** (`exports: ./src/index.ts`), and relative imports use explicit `.ts` extensions (`allowImportingTsExtensions`; tsc never emits). Next/Turbopack (`transpilePackages`) does not map NodeNext-style `./x.js` specifiers to `.ts` source, whereas `.ts` specifiers work in Turbopack, tsx, Vitest and Node type-stripping alike. Production bundling of the trust service is a Phase 4 task.
 - **D9 — Badge-extension conformance is reported, not gating (open).** Concordium's `check-badge` says `badge_valid:false` when a card lacks the `…/concordium-badge/v1` extension, even if the hash matches (token 1112). The brief's verdict does not require it. Cards that Countersign generates will include it.
 
+- **D10 — web-sdk's schema decoder returns numbers as BigInt.** `deserializeReceiveReturnValue` / `deserializeTypeValue` parse with json-bigint, so a `[u8; 32]` (the registry's `metadata_hash`) arrives as an array of BigInt, while `ByteArray` arrives as a hex string. Found on the first real gRPC run (2026-11-13); `bytesToHex` now accepts both, and a regression test decodes through the real SDK.
+- **D11 — Relative paths in `.env` resolve from the repo root.** pnpm runs package scripts with the package directory as cwd, so `./secrets/…` used to point into `apps/trust-service/`. `loadConfig` now resolves against the nearest `pnpm-workspace.yaml`.
+
 ### Environment blockers
 
-- **B1 — This cloud sandbox cannot reach the Concordium node over gRPC.** Its egress proxy carries only HTTPS on 443, not gRPC/HTTP2 or port 20000. Every gRPC call here fails with `UNAVAILABLE / ECONNRESET`. HTTPS services work: docs, the hosted registry, the indexer, the CCDScan API and wallet-proxy. **Effect:** the direct-chain read, anchoring and `verifyWithNode` are typechecked but have not run. Run them from a laptop, or from the deployed trust-service container.
+- **B1 — This cloud sandbox cannot reach the Concordium node over gRPC.** Its egress proxy carries only HTTPS on 443, not gRPC/HTTP2 or port 20000. Every gRPC call here fails with `UNAVAILABLE / ECONNRESET`. **Confirmed working from the user's Mac (2026-11-13):** the spike connected to `grpc.testnet.concordium.com:20000`, read finalized block 50760060 and decoded `CIS-8004.agentOf`. HTTPS services work: docs, the hosted registry, the indexer, the CCDScan API and wallet-proxy. **Effect:** the direct-chain read, anchoring and `verifyWithNode` are typechecked but have not run. Run them from a laptop, or from the deployed trust-service container.
 - **B2 — Anchoring needs a funded testnet account.** That means a Browser Wallet account with testnet CCD and its key exported as `.export`. Only the user can create it.
 - **B3 — Sandbox-only:** Node's built-in `fetch` ignores `HTTPS_PROXY` unless `NODE_USE_ENV_PROXY=1`. Not needed on a normal machine.
 
