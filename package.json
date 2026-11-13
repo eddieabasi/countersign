@@ -19,6 +19,7 @@
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "spike": "pnpm --filter @countersign/trust-service spike",
     "spike:registry": "pnpm --filter @countersign/trust-service spike:registry",
     "spike:proof": "pnpm --filter @countersign/trust-service spike:proof",
     "spike:anchor": "pnpm --filter @countersign/trust-service spike:anchor"

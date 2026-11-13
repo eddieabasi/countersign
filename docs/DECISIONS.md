@@ -192,6 +192,7 @@ Signer: `buildAccountSigner(parseWallet(<Browser Wallet .export>))`; the loader 
 ```bash
 pnpm install
 cp .env.example .env            # set ANCHOR_WALLET_EXPORT_PATH for on-chain steps
+pnpm spike                      # runs all three below in order + prints a PASS/FAIL summary
 pnpm spike:registry             # default badge JyP9VYjZYJcQebdQ7ypD5; also try 0, 15, 999999
 pnpm spike:registry 1112 --via grpc
 pnpm spike:proof create         # then: pnpm spike:proof verify --presentation <file>
