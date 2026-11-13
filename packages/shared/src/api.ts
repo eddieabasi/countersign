@@ -70,6 +70,7 @@ export function createTrustServiceClient(baseUrl: string) {
         method: 'POST',
         body: JSON.stringify(input),
       }),
+    health: () => call<{ ok: boolean; network: string; anchorAccount: string | null }>('/healthz'),
     getMerchant: (account: string) =>
       call<MerchantPublic>(`/merchants/${encodeURIComponent(account)}`),
   };

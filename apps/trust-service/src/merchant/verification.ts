@@ -45,6 +45,20 @@ export function parseAccount(account: string): AccountAddress.Type {
 }
 
 /**
+ * The anchoring service account pays fees; it must never become a merchant (it would make the
+ * payer look like the accountable business). Throws VerificationError(400).
+ */
+export function assertNotAnchorAccount(account: string, anchorAccount: string): void {
+  if (account === anchorAccount) {
+    throw new VerificationError(
+      400,
+      'anchor_account',
+      "This is Countersign's anchoring account. Select your merchant account in the wallet.",
+    );
+  }
+}
+
+/**
  * Step 1: build the account-credential request, anchor it on testnet (VRA) and wait until it is
  * finalized — the wallet checks the anchor before it will build a proof.
  */
@@ -53,6 +67,7 @@ export async function createProofRequest(
   input: { account: string; displayName: string },
 ): Promise<{ sessionId: string; request: VerificationRequestV1.JSON; vraTxHash: string }> {
   const account = parseAccount(input.account);
+  assertNotAnchorAccount(account.address, deps.chain.anchor.sender.address);
   const claims = merchantAccountClaims();
   const context = merchantProofContext({
     connectionId: `browser-wallet:${account.address}`,

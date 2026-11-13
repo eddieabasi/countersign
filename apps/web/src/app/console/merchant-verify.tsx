@@ -21,6 +21,7 @@ type Phase =
   | { kind: 'wrong-network' }
   | { kind: 'disconnected' }
   | { kind: 'ready' }
+  | { kind: 'anchor-account' }
   | { kind: 'anchoring' }
   | { kind: 'awaiting-wallet'; vraTxHash: string }
   | { kind: 'verifying'; vraTxHash: string }
@@ -39,6 +40,7 @@ export function MerchantVerify() {
   const [accounts, setAccounts] = useState<string[]>([]);
   const [account, setAccount] = useState<string>('');
   const [displayName, setDisplayName] = useState('');
+  const anchorAccountRef = useRef<string | null>(null);
 
   const loadMerchant = useCallback(async (acct: string) => {
     try {
@@ -49,6 +51,20 @@ export function MerchantVerify() {
       else setPhase({ kind: 'failed', message: describeError(e) });
     }
   }, []);
+
+  /** Switch the console to `acct`; never let the anchoring payer account verify as a merchant. */
+  const selectAccount = useCallback(
+    async (acct: string) => {
+      setAccounts((prev) => (prev.includes(acct) ? prev : [...prev, acct]));
+      setAccount(acct);
+      if (acct === anchorAccountRef.current) {
+        setPhase({ kind: 'anchor-account' });
+        return;
+      }
+      await loadMerchant(acct);
+    },
+    [loadMerchant],
+  );
 
   const checkChain = useCallback(async (wallet: WalletApi) => {
     const genesis = await wallet.getSelectedChain();
@@ -72,22 +88,23 @@ export function MerchantVerify() {
       }
       if (cancelled) return;
       walletRef.current = wallet;
+      anchorAccountRef.current = await api
+        .health()
+        .then((h) => h.anchorAccount)
+        .catch(() => null);
       wallet.on('chainChanged', () => window.location.reload());
       wallet.on('accountDisconnected', () => window.location.reload());
+      // Fires when the user selects another (connected) account in the wallet.
+      wallet.on('accountChanged', (acct: string) => void selectAccount(acct));
       if (!(await checkChain(wallet))) return;
       const current = await wallet.getMostRecentlySelectedAccount();
-      if (current) {
-        setAccounts([current]);
-        setAccount(current);
-        await loadMerchant(current);
-      } else {
-        setPhase({ kind: 'disconnected' });
-      }
+      if (current) await selectAccount(current);
+      else setPhase({ kind: 'disconnected' });
     })();
     return () => {
       cancelled = true;
     };
-  }, [checkChain, loadMerchant]);
+  }, [checkChain, selectAccount]);
 
   const connect = async () => {
     const wallet = walletRef.current;
@@ -100,9 +117,9 @@ export function MerchantVerify() {
         return;
       }
       setAccounts(accts);
-      const first = accts[0] as string;
-      setAccount(first);
-      await loadMerchant(first);
+      // Prefer an account that is not the anchoring payer.
+      const pick = accts.find((a) => a !== anchorAccountRef.current) ?? (accts[0] as string);
+      await selectAccount(pick);
     } catch (e) {
       setPhase({ kind: 'failed', message: describeError(e) });
     }
@@ -142,6 +159,32 @@ export function MerchantVerify() {
     <section className="card" aria-live="polite">
       <h2>1. Verify your business</h2>
 
+      {accounts.length > 0 && (
+        <div className="account-bar">
+          <label>
+            Merchant account
+            <select
+              value={account}
+              onChange={(e) => void selectAccount(e.target.value)}
+              disabled={['anchoring', 'awaiting-wallet', 'verifying'].includes(phase.kind)}
+            >
+              {accounts.map((a) => (
+                <option key={a} value={a}>
+                  {a === anchorAccountRef.current ? `${a} (anchoring account)` : a}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="muted small">
+            Don&apos;t see your merchant account? Open the wallet, select that account and connect
+            it to this site — the console switches to it automatically.{' '}
+            <button type="button" className="link" onClick={connect}>
+              Refresh connected accounts
+            </button>
+          </p>
+        </div>
+      )}
+
       {phase.kind === 'detecting' && <p className="muted">Looking for the Concordium wallet…</p>}
 
       {phase.kind === 'no-wallet' && (
@@ -172,16 +215,6 @@ export function MerchantVerify() {
           }}
         >
           <label>
-            Account
-            <select value={account} onChange={(e) => setAccount(e.target.value)}>
-              {accounts.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
             Business display name
             <input
               value={displayName}
@@ -199,6 +232,16 @@ export function MerchantVerify() {
           </p>
           <button type="submit">Verify with Concordium</button>
         </form>
+      )}
+
+      {phase.kind === 'anchor-account' && (
+        <div className="err">
+          <p>
+            <strong>This is Countersign&apos;s anchoring account</strong> — it only pays for
+            anchoring and cannot be a merchant. In the wallet, select your merchant account (Account
+            B) and connect it to this site.
+          </p>
+        </div>
       )}
 
       {phase.kind === 'anchoring' && (

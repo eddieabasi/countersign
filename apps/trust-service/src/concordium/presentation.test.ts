@@ -77,3 +77,15 @@ describe('verification request JSON', () => {
     ).toEqual(Buffer.from(VerificationRequestV1.computeAnchorHash(context, claims)));
   });
 });
+
+describe('anchor account guard', () => {
+  it('refuses the anchoring service account as a merchant', async () => {
+    const { assertNotAnchorAccount, VerificationError } =
+      await import('../merchant/verification.ts');
+    const anchor = '3k3MRAXGqgS8b6FCa2MjX5adcowmf1LhEnd8xfHT4J7Jnse3k4';
+    expect(() => assertNotAnchorAccount(anchor, anchor)).toThrow(VerificationError);
+    expect(() =>
+      assertNotAnchorAccount('3mC9tNFNDhTLJNjHHEdrjkqvcCDLDbff1ceA1b9xah9cfxeCKA', anchor),
+    ).not.toThrow();
+  });
+});

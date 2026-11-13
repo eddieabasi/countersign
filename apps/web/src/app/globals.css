@@ -128,3 +128,19 @@ button {
   border-radius: 8px;
   padding: 0.75rem 1rem;
 }
+
+.account-bar {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+button.link {
+  background: none;
+  color: var(--accent);
+  padding: 0;
+  font-weight: 600;
+  text-decoration: underline;
+}
